@@ -1,0 +1,23 @@
+.github/workflows/release-fork.yml
+  0c2407320454aeec 1-156
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ef2bd0b5a79851e279b116748ec0f80d753972e0",
+  "prompts": {
+    "0c2407320454aeec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63e7158e-938d-4ac7-bae6-2fe658ac5e8b",
+        "model": "grok-4.5-build-free"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 35811,
+      "total_deletions": 0,
+      "accepted_lines": 35811,
+      "overriden_lines": 0
+    }
+  }
+}
