@@ -777,25 +777,28 @@ async function ensureTreeLoadedForTarget(target: ActiveTabSidebarTarget, opts?: 
 
   // Ensure databases are loaded under the connection
   const connNode = store.treeNodes.find((n) => n.id === connId);
-  if (connNode && (force || !connNode.children || connNode.children.length === 0)) {
-    try {
-      if (config.db_type === "redis") {
-        await store.loadRedisDatabases(connId);
-      } else if (config.db_type === "mongodb") {
-        await store.loadMongoDatabases(connId);
-      } else if (config.db_type === "elasticsearch") {
-        await store.loadElasticsearchIndices(connId);
-      } else if (config.db_type === "qdrant" || config.db_type === "milvus" || config.db_type === "weaviate" || config.db_type === "chromadb") {
-        await store.loadVectorCollections(connId);
-      } else if (config.db_type === "mq") {
-        await store.loadMqTenants(connId, loadOptions);
-      } else if (config.db_type === "nacos") {
-        await store.loadNacosNamespaces(connId, loadOptions);
-      } else {
-        await store.loadDatabases(connId, loadOptions);
+  if (connNode) {
+    const connectionChildrenEmpty = !connNode.children || connNode.children.length === 0;
+    if (force || connectionChildrenEmpty) {
+      try {
+        if (config.db_type === "redis") {
+          await store.loadRedisDatabases(connId);
+        } else if (config.db_type === "mongodb") {
+          await store.loadMongoDatabases(connId);
+        } else if (config.db_type === "elasticsearch") {
+          await store.loadElasticsearchIndices(connId);
+        } else if (config.db_type === "qdrant" || config.db_type === "milvus" || config.db_type === "weaviate" || config.db_type === "chromadb") {
+          await store.loadVectorCollections(connId);
+        } else if (config.db_type === "mq") {
+          await store.loadMqTenants(connId, loadOptions);
+        } else if (config.db_type === "nacos") {
+          await store.loadNacosNamespaces(connId, loadOptions);
+        } else {
+          await store.loadDatabases(connId, loadOptions);
+        }
+      } catch {
+        return;
       }
-    } catch {
-      return;
     }
   }
 

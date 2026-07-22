@@ -2829,6 +2829,7 @@ async fn execute_on_pool_once(
                         truncated: false,
                         session_id: None,
                         has_more: false,
+                        elasticsearch_raw_body: None,
                     })
                 } else {
                     let affected = con.execute(&sql, []).map_err(|e| e.to_string())?;
@@ -2842,6 +2843,7 @@ async fn execute_on_pool_once(
                         truncated: false,
                         session_id: None,
                         has_more: false,
+                        elasticsearch_raw_body: None,
                     })
                 }
             })
@@ -4859,6 +4861,7 @@ mod tests {
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         }
     }
 

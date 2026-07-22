@@ -672,6 +672,7 @@ pub fn duckdb_execute_with_max_rows(
             truncated,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     } else {
         let affected = con.execute(sql, []).map_err(|e| e.to_string())?;
@@ -685,6 +686,7 @@ pub fn duckdb_execute_with_max_rows(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     }
 }
@@ -2284,6 +2286,7 @@ fn error_query_result(message: String) -> db::QueryResult {
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     }
 }
 
@@ -2298,6 +2301,7 @@ fn empty_query_result(execution_time_ms: u128) -> db::QueryResult {
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     }
 }
 
@@ -2329,6 +2333,7 @@ async fn execute_multi_sqlserver(
                 truncated: false,
                 session_id: None,
                 has_more: false,
+                elasticsearch_raw_body: None,
             });
             break;
         }
@@ -2380,6 +2385,7 @@ async fn execute_multi_sqlserver(
                     truncated: false,
                     session_id: None,
                     has_more: false,
+                    elasticsearch_raw_body: None,
                 });
                 if matches!(action, PoolErrorAction::Discard | PoolErrorAction::ReconnectAndRetry) {
                     state.remove_pool_by_key(pool_key).await;
@@ -2402,6 +2408,7 @@ async fn execute_multi_sqlserver(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         });
     }
 
@@ -2519,6 +2526,7 @@ pub async fn execute_statements(
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -2695,6 +2703,7 @@ async fn exec_tx_pg_inner(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         }),
         (Err(e), Ok(_)) => Err(e),
         (Ok(_), Err(reset_err)) => Err(reset_err),
@@ -2774,6 +2783,7 @@ async fn exec_tx_mysql_inner(
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -2837,6 +2847,7 @@ async fn exec_tx_sqlite_inner(
                 truncated: false,
                 session_id: None,
                 has_more: false,
+                elasticsearch_raw_body: None,
             })
         })
     })
@@ -2926,6 +2937,7 @@ async fn exec_tx_explicit_inner(
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -2968,6 +2980,7 @@ async fn exec_tx_none_inner(
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -3486,6 +3499,7 @@ async fn execute_manual_txn_postgres_statement(
             truncated,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     } else {
         let affected = conn.execute(sql, &[]).await.map_err(|e| format!("Query failed: {e}"))?;
@@ -3499,6 +3513,7 @@ async fn execute_manual_txn_postgres_statement(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     }
 }
@@ -3538,6 +3553,7 @@ async fn execute_manual_txn_mysql_statement(
             truncated,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     } else {
         let result = conn.query_iter(sql).await.map_err(|e| format!("Query failed: {e}"))?;
@@ -3553,6 +3569,7 @@ async fn execute_manual_txn_mysql_statement(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     }
 }
@@ -3585,6 +3602,7 @@ pub async fn commit_manual_transaction(state: &AppState, txn_session_id: &str) -
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -3609,6 +3627,7 @@ pub async fn rollback_manual_transaction(state: &AppState, txn_session_id: &str)
         truncated: false,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -4104,6 +4123,7 @@ mod tests {
                 truncated: false,
                 session_id: None,
                 has_more: false,
+                elasticsearch_raw_body: None,
             })
         })
         .await;
@@ -4125,6 +4145,7 @@ mod tests {
                 truncated: false,
                 session_id: None,
                 has_more: false,
+                elasticsearch_raw_body: None,
             })
         })
         .await;
@@ -5039,6 +5060,7 @@ mod tests {
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         };
 
         let normalized = normalize_query_result_for_js(result);
