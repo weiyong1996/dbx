@@ -13,6 +13,12 @@ import JsonTree from "./JsonTree.vue";
 const props = defineProps<{
   status: number;
   body: string;
+  /** When true, render a "Table" button to switch back to the grid view. */
+  canShowTable?: boolean;
+}>();
+
+const emit = defineEmits<{
+  showTable: [];
 }>();
 
 const { t } = useI18n();
@@ -109,6 +115,9 @@ onMounted(() => {
       <Button variant="ghost" size="icon" class="h-7 w-7 shrink-0" :title="t('grid.copyJson')" :aria-label="t('grid.copyJson')" @click="copyResponse">
         <Copy class="h-3.5 w-3.5" />
       </Button>
+      <button v-if="canShowTable" type="button" class="inline-flex h-6 items-center rounded-sm bg-secondary px-2 text-xs font-medium text-secondary-foreground shadow-sm transition-colors hover:bg-secondary/80" @click="emit('showTable')">
+        {{ t("tabs.tableData") }}
+      </button>
     </header>
     <div class="min-h-0 flex-1 overflow-hidden bg-background p-4">
       <pre v-show="responseView === 'raw' || !parsedBody.valid" class="m-0 h-full overflow-auto bg-transparent p-0 font-mono text-sm leading-6 whitespace-pre-wrap break-words">{{ body }}</pre>

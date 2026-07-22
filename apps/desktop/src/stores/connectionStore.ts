@@ -2011,7 +2011,8 @@ export const useConnectionStore = defineStore("connection", () => {
     } else if (config.db_type === "mongodb") {
       await loadMongoDatabases(connectionId);
     } else if (config.db_type === "elasticsearch") {
-      await loadElasticsearchIndices(connectionId);
+      // Open/expand must not list indices; only manual refresh does.
+      await openElasticsearchConnectionTree(connectionId);
     } else if (config.db_type === "milvus") {
       await loadMilvusDatabases(connectionId);
     } else if (config.db_type === "qdrant" || config.db_type === "weaviate" || config.db_type === "chromadb") {
@@ -2672,6 +2673,41 @@ export const useConnectionStore = defineStore("connection", () => {
           node,
         ),
       );
+      node.isExpanded = true;
+    } catch (e) {
+      recordMetadataLoadError(connectionId, e);
+      throw e;
+    } finally {
+      node.isLoading = false;
+    }
+  }
+
+  /**
+   * Connect and expand an Elasticsearch root without listing indices.
+   * Connectivity uses GET / via ensureConnected/test_connection.
+   * Index nodes appear only after loadElasticsearchIndices (manual refresh).
+   */
+  async function openElasticsearchConnectionTree(connectionId: string) {
+    const node = findConnectionNode(connectionId);
+    if (!node) return;
+
+    // Keep a previously refreshed index list on plain re-expand.
+    if (node.children?.some((child) => child.type === "elasticsearch-index")) {
+      try {
+        await ensureConnected(connectionId);
+        node.isExpanded = true;
+        loadedTreeNodeChildrenIds.value.add(node.id);
+      } catch (e) {
+        recordMetadataLoadError(connectionId, e);
+        throw e;
+      }
+      return;
+    }
+
+    node.isLoading = true;
+    try {
+      await ensureConnected(connectionId);
+      setChildren(node, withSavedSqlRoot(connectionId, [], node));
       node.isExpanded = true;
     } catch (e) {
       recordMetadataLoadError(connectionId, e);
@@ -3925,7 +3961,11 @@ export const useConnectionStore = defineStore("connection", () => {
       } else if (config?.db_type === "mongodb") {
         await loadMongoDatabases(node.connectionId);
       } else if (config?.db_type === "elasticsearch") {
-        await loadElasticsearchIndices(node.connectionId);
+        if (options?.force) {
+          await loadElasticsearchIndices(node.connectionId);
+        } else {
+          await openElasticsearchConnectionTree(node.connectionId);
+        }
       } else if (config?.db_type === "milvus") {
         await loadMilvusDatabases(node.connectionId);
       } else if (config?.db_type === "qdrant" || config?.db_type === "weaviate" || config?.db_type === "chromadb") {
@@ -5495,6 +5535,7 @@ export const useConnectionStore = defineStore("connection", () => {
     updateRedisDbKeyStats,
     loadMongoDatabases,
     loadMilvusDatabases,
+    openElasticsearchConnectionTree,
     loadElasticsearchIndices,
     loadVectorCollections,
     loadMongoCollections,

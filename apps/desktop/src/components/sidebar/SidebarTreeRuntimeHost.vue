@@ -542,7 +542,8 @@ async function toggle() {
       } else if (config?.db_type === "mongodb") {
         await connectionStore.loadMongoDatabases(node.connectionId);
       } else if (config?.db_type === "elasticsearch") {
-        await connectionStore.loadElasticsearchIndices(node.connectionId);
+        // Open/expand: GET / only; indices load on manual refresh.
+        await connectionStore.openElasticsearchConnectionTree(node.connectionId);
       } else if (config?.db_type === "milvus") {
         await connectionStore.loadMilvusDatabases(node.connectionId);
       } else if (config?.db_type === "qdrant" || config?.db_type === "weaviate" || config?.db_type === "chromadb") {

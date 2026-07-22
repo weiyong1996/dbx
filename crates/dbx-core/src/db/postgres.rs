@@ -750,6 +750,7 @@ async fn execute_select_prepared(
         truncated,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -801,6 +802,7 @@ async fn execute_select_text(
         truncated,
         session_id: None,
         has_more: false,
+        elasticsearch_raw_body: None,
     })
 }
 
@@ -2501,6 +2503,7 @@ pub async fn execute_query_with_max_rows(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     }
 }
@@ -2963,6 +2966,7 @@ async fn execute_query_with_max_rows_inner(
             truncated: false,
             session_id: None,
             has_more: false,
+            elasticsearch_raw_body: None,
         })
     }
 }
