@@ -779,24 +779,14 @@ async function ensureTreeLoadedForTarget(target: ActiveTabSidebarTarget, opts?: 
   const connNode = store.treeNodes.find((n) => n.id === connId);
   if (connNode) {
     const connectionChildrenEmpty = !connNode.children || connNode.children.length === 0;
-    // ES may already have utility/Saved-SQL children without index nodes; still
-    // list indices when materializing a known index target.
-    const esTargetIndexName = config.db_type === "elasticsearch" ? (target.type === "mongo-collection" ? target.collectionName : target.type === "table" ? target.tableName : null) : null;
-    const esIndexChildren = config.db_type === "elasticsearch" ? (connNode.children?.filter((child) => child.type === "elasticsearch-index") ?? []) : [];
-    const esNeedsIndexList = config.db_type === "elasticsearch" && (force || (!!esTargetIndexName && !esIndexChildren.some((child) => child.label === esTargetIndexName)));
-    if (force || connectionChildrenEmpty || esNeedsIndexList) {
+    if (force || connectionChildrenEmpty) {
       try {
         if (config.db_type === "redis") {
           await store.loadRedisDatabases(connId);
         } else if (config.db_type === "mongodb") {
           await store.loadMongoDatabases(connId);
         } else if (config.db_type === "elasticsearch") {
-          // Open/expand uses GET / only. List indices on force or missing target.
-          if (esNeedsIndexList) {
-            await store.loadElasticsearchIndices(connId);
-          } else {
-            await store.openElasticsearchConnectionTree(connId);
-          }
+          await store.loadElasticsearchIndices(connId);
         } else if (config.db_type === "qdrant" || config.db_type === "milvus" || config.db_type === "weaviate" || config.db_type === "chromadb") {
           await store.loadVectorCollections(connId);
         } else if (config.db_type === "mq") {

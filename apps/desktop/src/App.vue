@@ -1625,7 +1625,7 @@ async function handleQuickOpenSelect(item: any) {
       } else if (config?.db_type === "mongodb") {
         await connectionStore.loadMongoDatabases(item.connectionId);
       } else if (config?.db_type === "elasticsearch") {
-        await connectionStore.openElasticsearchConnectionTree(item.connectionId);
+        await connectionStore.loadElasticsearchIndices(item.connectionId);
       } else if (config?.db_type === "qdrant" || config?.db_type === "milvus" || config?.db_type === "weaviate" || config?.db_type === "chromadb") {
         await connectionStore.loadVectorCollections(item.connectionId);
       } else if (config?.db_type === "mq") {
@@ -1650,7 +1650,7 @@ async function handleQuickOpenSelect(item: any) {
       } else if (config?.db_type === "mongodb") {
         await connectionStore.loadMongoDatabases(item.connectionId);
       } else if (config?.db_type === "elasticsearch") {
-        await connectionStore.openElasticsearchConnectionTree(item.connectionId);
+        await connectionStore.loadElasticsearchIndices(item.connectionId);
       } else if (config?.db_type === "qdrant" || config?.db_type === "milvus" || config?.db_type === "weaviate" || config?.db_type === "chromadb") {
         await connectionStore.loadVectorCollections(item.connectionId);
       } else if (config?.db_type === "mq") {

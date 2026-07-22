@@ -44,7 +44,7 @@ describe("connectionStore Elasticsearch open/expand", () => {
     setActivePinia(createPinia());
   });
 
-  it("openElasticsearchConnectionTree does not list indices", async () => {
+  it("openElasticsearchConnectionTree only ensures connectivity, does not expand or list indices", async () => {
     const elasticsearchListIndices = vi.fn().mockResolvedValue(["orders", "users"]);
     const checkConnectionHealth = vi.fn().mockResolvedValue(undefined);
 
@@ -68,7 +68,8 @@ describe("connectionStore Elasticsearch open/expand", () => {
 
     expect(elasticsearchListIndices).not.toHaveBeenCalled();
     const node = store.treeNodes.find((n) => n.id === "es-1");
-    expect(node?.isExpanded).toBe(true);
+    // openElasticsearchConnectionTree does NOT expand the node
+    expect(node?.isExpanded).toBe(false);
     expect(node?.children?.some((c) => c.type === "elasticsearch-index")).toBe(false);
   });
 
@@ -104,8 +105,8 @@ describe("connectionStore Elasticsearch open/expand", () => {
     ).toEqual(["orders", "users"]);
   });
 
-  it("re-expand preserves previously refreshed index children without re-listing", async () => {
-    const elasticsearchListIndices = vi.fn().mockResolvedValue(["orders"]);
+  it("loadElasticsearchIndices lists indices and expands", async () => {
+    const elasticsearchListIndices = vi.fn().mockResolvedValue(["orders", "users"]);
     const checkConnectionHealth = vi.fn().mockResolvedValue(undefined);
 
     vi.doMock("@/lib/backend/tauriRuntime", () => ({ isTauriRuntime: () => false }));
@@ -123,15 +124,16 @@ describe("connectionStore Elasticsearch open/expand", () => {
     const store = useConnectionStore();
     store.addEphemeralConnection(esConnection());
     seedConnectionNode(store);
-    const node = store.treeNodes.find((n) => n.id === "es-1")!;
 
     await store.loadElasticsearchIndices("es-1");
-    expect(elasticsearchListIndices).toHaveBeenCalledTimes(1);
 
-    node.isExpanded = false;
-    await store.openElasticsearchConnectionTree("es-1");
-
-    expect(elasticsearchListIndices).toHaveBeenCalledTimes(1);
-    expect(node.children?.some((c) => c.type === "elasticsearch-index" && c.label === "orders")).toBe(true);
+    expect(elasticsearchListIndices).toHaveBeenCalledWith("es-1");
+    const node = store.treeNodes.find((n) => n.id === "es-1");
+    expect(
+      node?.children
+        ?.filter((c) => c.type === "elasticsearch-index")
+        .map((c) => c.label)
+        .sort(),
+    ).toEqual(["orders", "users"]);
   });
 });
