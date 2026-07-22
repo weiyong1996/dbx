@@ -1,0 +1,63 @@
+crates/dbx-core/src/db/sqlserver.rs
+  0c2407320454aeec 350,395,781,1957,1975,2006,2067,2277,2293,2968
+crates/dbx-core/src/types.rs
+  0c2407320454aeec 242-246
+crates/dbx-core/src/schema.rs
+  0c2407320454aeec 2929,2974,3259,3274,3307,3373,3447
+crates/dbx-core/src/transfer.rs
+  0c2407320454aeec 2832,2846,4864
+crates/dbx-core/src/db/rqlite_driver.rs
+  0c2407320454aeec 306,356
+crates/dbx-core/src/db/vector_driver.rs
+  0c2407320454aeec 708,739
+crates/dbx-core/src/db/sqlite.rs
+  0c2407320454aeec 2377,2391
+crates/dbx-core/src/db/mysql.rs
+  0c2407320454aeec 2932,2957,2992,3049,3291
+crates/dbx-core/src/db/turso_driver.rs
+  0c2407320454aeec 352,371,387,570
+crates/dbx-core/src/db/cloudflare_d1/mod.rs
+  0c2407320454aeec 358
+crates/dbx-core/src/table_structure_sql/sqlite_rebuild.rs
+  0c2407320454aeec 688
+apps/desktop/src/i18n/locales/es.ts
+  0c2407320454aeec 541-542
+crates/dbx-core/src/db/clickhouse_driver.rs
+  0c2407320454aeec 462,622
+apps/desktop/src/types/database.ts
+  0c2407320454aeec 537-540
+apps/desktop/src/i18n/locales/ja.ts
+  0c2407320454aeec 539-540
+crates/dbx-core/src/db/influxdb_driver.rs
+  0c2407320454aeec 485,497,641
+apps/desktop/src/i18n/locales/en.ts
+  0c2407320454aeec 215-216
+crates/dbx-core/src/table_export.rs
+  0c2407320454aeec 293
+crates/dbx-core/src/query.rs
+  0c2407320454aeec 675,689,2289,2304,2336,2388,2411,2529,2706,2786,2850,2940,2983,3502,3516,3556,3572,3605,3630,4126,4148,5063
+crates/dbx-core/src/db/postgres.rs
+  0c2407320454aeec 753,805,2506,2969
+apps/desktop/src/i18n/locales/it.ts
+  0c2407320454aeec 539-540
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "10d408d2efe7f97c655c8dc44c76b403a481d860",
+  "prompts": {
+    "0c2407320454aeec": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "63e7158e-938d-4ac7-bae6-2fe658ac5e8b",
+        "model": "grok-4.5-build-free"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 38496,
+      "total_deletions": 307,
+      "accepted_lines": 38244,
+      "overriden_lines": 4
+    }
+  }
+}
