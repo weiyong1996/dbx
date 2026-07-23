@@ -111,7 +111,8 @@ jobs:
           releaseBody: ${{ steps.release-notes.outputs.body }}
           releaseDraft: true
           prerelease: false
-          args: --target ${{ matrix.target }}
+          # Disable updater artifacts (no signing key in fork) and skip updater bundling
+          args: --target ${{ matrix.target }} --config '{"bundle":{"createUpdaterArtifacts":false},"plugins":{"updater":{"active":false}}}'
 
       - name: Show sccache stats
         if: always()
