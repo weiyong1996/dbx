@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "3d1b135dd43e9a8cfad0d5acbc77dd43a3b09729",
+  "prompts": {
+    "609136e8c5e556b8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "77bb0c2c-f675-4463-b145-043e1129f49e",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 59,
+      "total_deletions": 23,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
