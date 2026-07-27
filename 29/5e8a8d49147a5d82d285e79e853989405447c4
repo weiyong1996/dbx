@@ -1,0 +1,27 @@
+crates/dbx-core/src/db/elasticsearch_driver.rs
+  7860a991f343c36d 1348-1360,2947-2977,3083-3089
+apps/desktop/src/components/common/ElasticsearchJsonResponsePanel.vue
+  7860a991f343c36d 16-21,110-111
+apps/desktop/src/components/layout/ContentArea.vue
+  7860a991f343c36d 352-364,1176,1226-1237
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "295e8a8d49147a5d82d285e79e853989405447c4",
+  "prompts": {
+    "7860a991f343c36d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6770d748-0933-44c6-9bbc-fe246b269d42",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 91,
+      "total_deletions": 9,
+      "accepted_lines": 101,
+      "overriden_lines": 0
+    }
+  }
+}
