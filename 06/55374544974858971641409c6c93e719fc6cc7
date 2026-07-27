@@ -1,0 +1,87 @@
+apps/desktop/src/stores/connectionStore.ts
+  7860a991f343c36d 2297,3083-3101,6158
+crates/dbx-core/src/db/vector_driver.rs
+  7860a991f343c36d 710,741
+crates/dbx-core/src/db/elasticsearch_driver.rs
+  7860a991f343c36d 47-48,59-65,67,77,87,106,114,178,194-225,229,233,235,237,239,257,1238,1304,1331,1369,1788,2015-2081
+crates/dbx-core/src/table_structure_sql/sqlite_rebuild.rs
+  7860a991f343c36d 688
+apps/desktop/src/types/database.ts
+  7860a991f343c36d 586-589
+crates/dbx-core/src/db/turso_driver.rs
+  7860a991f343c36d 352,371,387,570
+crates/dbx-core/src/table_export.rs
+  7860a991f343c36d 380
+crates/dbx-core/src/db/cloudflare_d1/mod.rs
+  7860a991f343c36d 358
+apps/desktop/src/i18n/locales/en.ts
+  7860a991f343c36d 225-226
+apps/desktop/src/lib/connection/elasticsearchKibanaProxy.ts
+  7860a991f343c36d 4,6-7,19-28,41-51,53-56
+apps/desktop/src/i18n/locales/zh-CN.ts
+  7860a991f343c36d 227-228
+apps/desktop/src/i18n/locales/es.ts
+  7860a991f343c36d 623-624
+packages/app-tests/elasticsearchKibanaProxy.test.ts
+  7860a991f343c36d 6,8,26-42
+apps/desktop/src/stores/__tests__/connectionStore.elasticsearchOpen.spec.ts
+  7860a991f343c36d 1-139
+crates/dbx-core/src/db/influxdb_driver.rs
+  7860a991f343c36d 485,497,641
+apps/desktop/src/components/connection/ConnectionDialog.vue
+  7860a991f343c36d 99,263,273,3173,5855-5859
+apps/desktop/src/i18n/locales/pt-BR.ts
+  7860a991f343c36d 622-623
+apps/desktop/src/i18n/locales/ja.ts
+  7860a991f343c36d 621-622
+crates/dbx-core/src/types.rs
+  7860a991f343c36d 248-252
+apps/desktop/src/i18n/locales/it.ts
+  7860a991f343c36d 621-622
+crates/dbx-core/src/db/sqlserver.rs
+  7860a991f343c36d 353,398,841,2017,2035,2066,2127,2337,2353,3028
+crates/dbx-core/src/db/clickhouse_driver.rs
+  7860a991f343c36d 496,665
+crates/dbx-core/src/schema/kingbase.rs
+  7860a991f343c36d 209
+crates/dbx-core/src/db/rqlite_driver.rs
+  7860a991f343c36d 306,356
+crates/dbx-core/src/db/postgres.rs
+  7860a991f343c36d 804,867,2705,3213
+apps/desktop/src/i18n/locales/zh-TW.ts
+  7860a991f343c36d 621-622
+crates/dbx-core/src/transfer.rs
+  7860a991f343c36d 2981,2995,5014
+apps/desktop/src/App.vue
+  7860a991f343c36d 1687,1712
+crates/dbx-core/src/db/mysql.rs
+  7860a991f343c36d 3346,3371,3406,3463,3705
+crates/dbx-core/src/query.rs
+  7860a991f343c36d 675,689,2289,2304,2336,2388,2411,2529,2719,2799,2863,2953,2996,3460,3500,3516,3549,3574,4070,4092,5007
+apps/desktop/src/components/sidebar/SidebarTreeRuntimeHost.vue
+  7860a991f343c36d 557
+crates/dbx-core/src/schema.rs
+  7860a991f343c36d 3355,3400,3687,3702,3735,3855,3957
+crates/dbx-core/src/db/sqlite.rs
+  7860a991f343c36d 2377,2391
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "0655374544974858971641409c6c93e719fc6cc7",
+  "prompts": {
+    "7860a991f343c36d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6770d748-0933-44c6-9bbc-fe246b269d42",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 534,
+      "total_deletions": 13,
+      "accepted_lines": 828,
+      "overriden_lines": 16
+    }
+  }
+}
