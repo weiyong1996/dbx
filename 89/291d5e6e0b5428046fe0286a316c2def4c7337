@@ -1,0 +1,259 @@
+packages/mcp-win32-arm64/package.json
+  7860a991f343c36d 3
+src-tauri/src/commands/schema.rs
+  7860a991f343c36d 434,440-445
+crates/dbx-core/src/table_structure_sql/sqlite_rebuild.rs
+  7860a991f343c36d 688
+packages/cli-win32-arm64/package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/xlsx_export.rs
+  7860a991f343c36d 9-10,20-21,34,73,79-81,103,110,121,131,138,180,195,335-344,348,354-356,360-367,377,380,384-388,390,392-393,395-396,398-400,404-414,498-500,683,746,751,786,811,816-817,849,859,899,914,925,941,957,964,1016-1018,1036,1061,1083-1173
+crates/dbx-core/src/db/redis_driver.rs
+  7860a991f343c36d 4178
+docs/content/docs/contributing.cn.mdx
+  7860a991f343c36d 36-37,426-427
+crates/dbx-web/src/routes/query.rs
+  7860a991f343c36d 253-258,766-797
+apps/desktop/src/i18n/locales/en.ts
+  7860a991f343c36d 74,179-180,228-229,863,964-1005,1148-1150,1157-1159,2943-2945,2948,3125,4294
+crates/dbx-core/src/storage.rs
+  7860a991f343c36d 3723,3785
+flake.nix
+  7860a991f343c36d 173
+.github/workflows/issue-claim.yml
+  7860a991f343c36d 1,14,32,34-35
+crates/dbx-web/src/main.rs
+  7860a991f343c36d 24,27-57,412-417
+.github/workflows/release.yml
+  7860a991f343c36d 338-443,547
+crates/dbx-core/src/db/vector_driver.rs
+  7860a991f343c36d 305,310-325,478-489,729,760,804-805,837-855
+crates/dbx-core/src/query.rs
+  7860a991f343c36d 675,689,2289,2304,2336,2388,2411,2529,2719,2799,2863,2953,2996,3460,3500,3516,3549,3574,3600,4071,4093,4186-4192,4690,5015
+.github/workflows/ci.yml
+  7860a991f343c36d 82-135,356,408-418
+crates/dbx-mcp/src/backend.rs
+  7860a991f343c36d 1238
+src-tauri/src/commands/query_result_export.rs
+  7860a991f343c36d 1,4,20-136,141,145-150,167-168,171-173,177,180,193-225
+crates/dbx-core/src/update.rs
+  7860a991f343c36d 45,296
+crates/dbx-core/src/db/mysql.rs
+  7860a991f343c36d 2414-2436,2451-2452,2466-2475,2479-2497,2509,3396,3421,3456,3513,3755,4457,4466-4496,4507,4512-4543,4554-4571
+src-tauri/tauri.conf.json
+  7860a991f343c36d 4
+apps/desktop/src/lib/backend/api.ts
+  7860a991f343c36d 168,229
+crates/dbx-core/tests/live_postgres_transfer.rs
+  7860a991f343c36d 15
+src-tauri/src/commands/connection.rs
+  7860a991f343c36d 179
+crates/dbx-core/src/data_grid_sql.rs
+  7860a991f343c36d 33,52,118-119,124,297-302,304,324,330,332-333,354,358,374,397,401-412,415,417,420,441,452,456,1198,1295,1740-1743,2370,2498,2512,2516,2520,2568,2961,2970-2989,3007,3034,3062,3093,3158,3182,5690
+agents/drivers/oracle-go/main_test.go
+  7860a991f343c36d 1213-1298,1308-1406
+crates/dbx-core/src/db/mod.rs
+  7860a991f343c36d 87-92,180-222
+crates/dbx-core/src/db/postgres.rs
+  7860a991f343c36d 33-48,111-173,403,447-449,527-530,891,954,2792,3300,3357-3387,3601-3651,3653,3670,3673,3675,3685-3714,3865-3911,3990-4033,4128,4714-4726,5026-5055
+crates/dbx-core/src/query_result_export.rs
+  7860a991f343c36d 4,14,43,91-100,159,177,202-357,584,644-646,766-768,802-806,871-874,953-954,959,965,973-975,998-1000,1031-1049,1058-1060,1150-1151,1219-1221,1244-1246,1336-1338,1416-1417,1437-1439,1462-1464,1528-1530,1589-1590,1597-1605,1624-1626,1645-1647,1681,1688,1691-1708,1716-1718,1731-1738,1790-1792,1831-1903
+crates/dbx-core/tests/live_clickhouse_query_result_export.rs
+  7860a991f343c36d 103-105
+crates/dbx-core/src/db/elasticsearch_driver.rs
+  7860a991f343c36d 5,34-36,50-51,62-70,80,90,109,117,181,197-228,232,236,238,240,242,260,1222,1241,1246,1250-1251,1255-1256,1264,1271-1412,1433,1450,1454-1471,1487,1906,2133-2199,3056-3119,3225-3231
+crates/dbx-core/src/schema.rs
+  7860a991f343c36d 6,2851-2859,2890,2967-2995,3045-3058,3400,3445,3732,3747,3780,3900,4002,4867,5527,5532-5534,5648-5670,5827-5831,5849-5852,6034-6073,6187-6189,6266-6299,6329-6330,6332-6358,6361,6364,6883-6893,6938-6942,7042-7070,7279-7357,7660-7868
+src-tauri/src/lib.rs
+  7860a991f343c36d 1487
+crates/dbx-core/src/sql_dialect/table_select.rs
+  7860a991f343c36d 57-59,115-117,127
+package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/sql_dialect/tests.rs
+  7860a991f343c36d 822,844-881
+packages/cli-linux-arm64-gnu/package.json
+  7860a991f343c36d 3
+src-tauri/src/commands/update.rs
+  7860a991f343c36d 24,212,216-219,238-242,459-460,463-468
+apps/desktop/src/i18n/locales/it.ts
+  7860a991f343c36d 75,180-181,624-625,840,1050-1052,1248-1289,1292-1294,2802-2804,2807,2980,4047
+crates/dbx-core/src/sql_editability.rs
+  7860a991f343c36d 140,920-945
+packages/cli-linux-x64-gnu/package.json
+  7860a991f343c36d 3
+packages/cli-win32-x64/package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/mq/service.rs
+  7860a991f343c36d 860
+.github/workflows/agents-release.yml
+  7860a991f343c36d 217,239,457
+crates/dbx-core/src/mq/config.rs
+  7860a991f343c36d 107
+agents/drivers/kingbase-go/main_test.go
+  7860a991f343c36d 80-99,271-314,407-643
+docs/content/docs/keyboard-shortcuts.cn.mdx
+  7860a991f343c36d 15,82
+docs/content/docs/contributing.mdx
+  7860a991f343c36d 36-37,426-427
+crates/dbx-core/src/db_admin_sql.rs
+  7860a991f343c36d 165-173,594-609,611-623,625,1447,1457,1467,1477,1487,1491-1517,1524,1534
+apps/desktop/src/i18n/locales/es.ts
+  7860a991f343c36d 76,181-182,626-627,842,1052-1054,1250-1291,1294-1296,2804-2806,2809,2982,4049
+apps/desktop/src/lib/backend/tauri.ts
+  7860a991f343c36d 64,1109-1112,1205-1208,1499,2716,2750,2760-2762,2894,2902,2907
+crates/dbx-core/src/lib.rs
+  7860a991f343c36d 21
+crates/dbx-core/tests/live_mysql57.rs
+  7860a991f343c36d 171-173,259-261
+crates/dbx-core/src/agent_connection.rs
+  7860a991f343c36d 10-18,82,610,1030-1065
+crates/dbx-core/src/transfer.rs
+  7860a991f343c36d 1153,2981,2995,4926,5015,6252-6272
+packages/mcp-linux-x64-gnu/package.json
+  7860a991f343c36d 3
+src-tauri/src/commands/xlsx_export.rs
+  7860a991f343c36d 14-15,28,33-39
+crates/dbx-core/src/nacos/service.rs
+  7860a991f343c36d 221,291
+crates/dbx-core/src/schema/kingbase.rs
+  7860a991f343c36d 209
+crates/dbx-core/src/table_import.rs
+  7860a991f343c36d 5863,5870,5907,5914,6059,6417,6841
+crates/dbx-web/src/routes/connection.rs
+  7860a991f343c36d 420
+agents/scripts/validate_agents.py
+  7860a991f343c36d 248-255
+agents/scripts/validate_agents_test.py
+  7860a991f343c36d 322-325,382-383
+crates/dbx-core/src/table_export.rs
+  7860a991f343c36d 24,62-63,382,769,774-776,1396,1401-1403,1881,2042,2091,2410
+packages/mcp-darwin-arm64/package.json
+  7860a991f343c36d 3
+docs/data/contributors.json
+  7860a991f343c36d 3-4
+crates/dbx-core/tests/live_sqlserver_completion.rs
+  7860a991f343c36d 18,453-455
+agents/drivers/kingbase-go/main.go
+  7860a991f343c36d 11,17,132,338,360,447,458-498,861-868,870,896,903-1066
+crates/dbx-core/src/agent_service.rs
+  7860a991f343c36d 2070-2082,2098-2116
+packages/mcp-win32-x64/package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/production_safety.rs
+  7860a991f343c36d 643
+crates/dbx-core/tests/live_sqlserver_query_result_export.rs
+  7860a991f343c36d 13,113-115
+agents/drivers/xugu/main.go
+  7860a991f343c36d 19-20,3958-3979
+apps/desktop/src/types/database.ts
+  7860a991f343c36d 119,561-562,589-592
+docs/content/docs/query-editor.mdx
+  7860a991f343c36d 39-43,49-52
+packages/cli/package.json
+  7860a991f343c36d 3,37-42
+crates/dbx-web/src/routes/mq.rs
+  7860a991f343c36d 1544
+packages/cli-darwin-arm64/package.json
+  7860a991f343c36d 3
+docs/content/docs/keyboard-shortcuts.mdx
+  7860a991f343c36d 15,82
+apps/desktop/src/lib/__tests__/sql/semantic/completion.spec.ts
+  7860a991f343c36d 38-57
+apps/desktop/src/i18n/locales/ja.ts
+  7860a991f343c36d 76,180-181,624-625,839,1047-1049,1249-1290,1293-1295,2803-2805,2808,2981,4031
+crates/dbx-cli/src/main.rs
+  7860a991f343c36d 911
+crates/dbx-core/src/cloud_sync.rs
+  7860a991f343c36d 1120,1175,1267
+crates/dbx-core/src/connection_secrets.rs
+  7860a991f343c36d 740
+crates/dbx-core/src/nacos/config.rs
+  7860a991f343c36d 289
+crates/dbx-core/src/sql.rs
+  7860a991f343c36d 116,131,141-144,172-175,284,387-391,435,465,485,537,749,803-807,819,832,867-869,888,898,2024-2036,3127,3130-3135,3201-3265
+src-tauri/windows/nsis/installer.nsi
+  7860a991f343c36d 68-90,568-595,597,670
+crates/dbx-core/src/db/cloudflare_d1/mod.rs
+  7860a991f343c36d 358
+agents/versions.json
+  7860a991f343c36d 22-23,32,34,37
+crates/dbx-core/src/db/sqlserver.rs
+  7860a991f343c36d 353,398,841,1838-1845,1869-1880,1882-1894,1910,2048,2066,2097,2158,2332-2336,2368,2384,2670-2698,3088
+apps/desktop/src/lib/backend/http.ts
+  7860a991f343c36d 138,725-728,1009-1012,1901,1908,1922
+crates/dbx-core/tests/database_export_prefetch.rs
+  7860a991f343c36d 90
+apps/desktop/src/lib/__tests__/sql/semantic/model.spec.ts
+  7860a991f343c36d 83-105
+crates/dbx-core/src/db/influxdb_driver.rs
+  7860a991f343c36d 485,497,641
+crates/dbx-core/examples/table_import_bench.rs
+  7860a991f343c36d 103
+src-tauri/src/commands/query.rs
+  7860a991f343c36d 516-530
+packages/mcp-linux-arm64-gnu/package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/db/clickhouse_driver.rs
+  7860a991f343c36d 496,665
+crates/dbx-core/tests/live_postgres_query_result_export.rs
+  7860a991f343c36d 23,138-140,216-218,287-289,361-363,426-428
+crates/dbx-core/src/db/turso_driver.rs
+  7860a991f343c36d 352,371,387,570
+docs/content/docs/query-editor.cn.mdx
+  7860a991f343c36d 39-43,49-52
+packages/cli-darwin-x64/package.json
+  7860a991f343c36d 3
+packages/mcp-darwin-x64/package.json
+  7860a991f343c36d 3
+crates/dbx-core/src/db/rqlite_driver.rs
+  7860a991f343c36d 306,356
+agents/drivers/oracle-go/main.go
+  7860a991f343c36d 2115,2213-2225,2230-2239,2241,2243,2245-2246,2248-2255,2257
+packages/mcp-server/package.json
+  7860a991f343c36d 3,37-42
+crates/dbx-core/tests/live_postgres_tsvector.rs
+  7860a991f343c36d 79
+apps/desktop/src/lib/sql/semantic/completion.ts
+  7860a991f343c36d 186-191,203,205,223
+crates/dbx-core/src/connection.rs
+  7860a991f343c36d 1149,3732-3736,3834-3835,3857,4773-4784
+apps/desktop/src/lib/sql/semantic/model.ts
+  7860a991f343c36d 37-42,94,441-442,453,469,482-525,609-624,627-628,680,715,726,779
+packages/mcp-server/server.json
+  7860a991f343c36d 9,14
+agents/scripts/driver_release_packages_test.py
+  7860a991f343c36d 81,85,87,89,92,99-104,106-109
+crates/dbx-core/src/types.rs
+  7860a991f343c36d 248-252
+agents/drivers/xugu/main_test.go
+  7860a991f343c36d 1475-1584,1594-1605,1615-1671
+crates/dbx-core/src/nacos/http.rs
+  7860a991f343c36d 152-164,182,184,198,200,203-210,2588-2596,3285-3363
+crates/dbx-web/src/routes/schema.rs
+  7860a991f343c36d 28,465-475
+crates/dbx-core/src/db/sqlite.rs
+  7860a991f343c36d 2377,2391
+crates/dbx-core/src/models/connection.rs
+  7860a991f343c36d 75-76,438,542-543,639,951,1368-1384,1786-1790,1796,1849-1877,2184,2253-2266,2950-3047
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "89291d5e6e0b5428046fe0286a316c2def4c7337",
+  "prompts": {
+    "7860a991f343c36d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6770d748-0933-44c6-9bbc-fe246b269d42",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 131839,
+      "total_deletions": 502,
+      "accepted_lines": 275042,
+      "overriden_lines": 0
+    }
+  }
+}
