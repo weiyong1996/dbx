@@ -1,0 +1,39 @@
+apps/desktop/src/i18n/locales/it.ts
+  d9929fa2196fde31 4320-4321
+apps/desktop/src/i18n/locales/pt-BR.ts
+  d9929fa2196fde31 4322-4323
+apps/desktop/src/stores/settingsStore.ts
+  d9929fa2196fde31 671
+apps/desktop/src/components/editor/EditorSettingsDialog.vue
+  d9929fa2196fde31 3360-3367
+apps/desktop/src/i18n/locales/es.ts
+  d9929fa2196fde31 4322-4323
+apps/desktop/src/i18n/locales/zh-CN.ts
+  d9929fa2196fde31 4555-4556
+apps/desktop/src/i18n/locales/ja.ts
+  d9929fa2196fde31 4311-4312
+apps/desktop/src/i18n/locales/zh-TW.ts
+  d9929fa2196fde31 3987-3988
+apps/desktop/src/i18n/locales/en.ts
+  d9929fa2196fde31 4556-4557
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "55fb0ca74a5f475ad95b02ec0067b60a9ad04df5",
+  "prompts": {
+    "d9929fa2196fde31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32f21785-3496-48f2-8baf-032ee5ed30f0",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 33,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    }
+  }
+}
