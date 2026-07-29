@@ -1,0 +1,35 @@
+apps/desktop/src/i18n/locales/pt-BR.ts
+  d9929fa2196fde31 4322-4324
+apps/desktop/src/i18n/locales/zh-CN.ts
+  d9929fa2196fde31 4555-4557
+apps/desktop/src/i18n/locales/en.ts
+  d9929fa2196fde31 4556-4558
+apps/desktop/src/i18n/locales/ja.ts
+  d9929fa2196fde31 4311-4313
+apps/desktop/src/i18n/locales/it.ts
+  d9929fa2196fde31 4320-4322
+apps/desktop/src/i18n/locales/es.ts
+  d9929fa2196fde31 4322-4324
+apps/desktop/src/i18n/locales/zh-TW.ts
+  d9929fa2196fde31 3987-3989
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "7e53248e51fa424a34ee17786af19c5e13961202",
+  "prompts": {
+    "d9929fa2196fde31": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32f21785-3496-48f2-8baf-032ee5ed30f0",
+        "model": "xopglm51"
+      },
+      "human_author": "weiyong",
+      "messages": [],
+      "total_additions": 21,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    }
+  }
+}
