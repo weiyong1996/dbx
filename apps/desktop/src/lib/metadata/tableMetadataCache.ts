@@ -4,6 +4,7 @@ import { editableRowIdentifierColumns } from "@/lib/table/tableEditing";
 import { createMetadataLoadTrace, logMetadataLoadTrace, MetadataLoadCoordinator, type MetadataLoadCacheStatus, type MetadataLoadTraceLogger } from "./metadataLoadCoordinator";
 import { metadataScopeKey, metadataScopeParts, type MetadataScopeInput } from "./metadataLoadScope";
 import { metadataCacheInvalidationMatcher, MetadataResultCache, type MetadataCacheInvalidation } from "./metadataResultCache";
+import { clearTableMetadataDiskCache, deleteTableMetadataDiskCacheByScopeKeys, loadTableMetadataFromDisk, saveTableMetadataToDisk } from "./tableMetadataDiskCache";
 
 export const TABLE_METADATA_CACHE_TTL_MS = 30_000;
 const TABLE_METADATA_CACHE_MAX_ENTRIES = 120;
@@ -141,6 +142,7 @@ export async function loadTableMetadata(request: TableMetadataRequest): Promise<
   if (!request.force) {
     const cached = tableMetadataCache.get(scope);
     if (cached) {
+      console.log("[DBX][table-metadata] memory-cache-hit", request.tableName, "columns:", cached.value.columns.length, "stale:", cached.stale);
       logMetadataLoadTrace(request.traceLogger, trace, "cache-hit", {
         cacheStatus: cached.stale ? "stale" : "hit",
         resultCount: cached.value.columns.length,
@@ -150,6 +152,26 @@ export async function loadTableMetadata(request: TableMetadataRequest): Promise<
     }
   }
 
+  // 内存未命中：尝试磁盘缓存（force 模式跳过）
+  if (!request.force) {
+    const diskResult = await loadTableMetadataFromDisk(scope);
+    if (diskResult) {
+      console.log("[DBX][table-metadata] disk-cache-hit", request.tableName, "columns:", diskResult.metadata.columns.length, "stale:", diskResult.isStale);
+      // 回填内存缓存，让后续 30s 内的访问直接命中内存
+      tableMetadataCache.set(scope, diskResult.metadata);
+      const ageMs = Math.max(0, Date.now() - diskResult.cachedAtMs);
+      logMetadataLoadTrace(request.traceLogger, trace, "disk-cache-hit", {
+        cacheStatus: diskResult.isStale ? "stale" : "hit",
+        resultCount: diskResult.metadata.columns.length,
+        stale: diskResult.isStale,
+      });
+      return { metadata: diskResult.metadata, cacheStatus: diskResult.isStale ? "stale" : "hit", ageMs };
+    }
+    console.log("[DBX][table-metadata] disk-cache-miss", request.tableName);
+  }
+
+  // 内存和磁盘都 miss：网络加载
+  console.log("[DBX][table-metadata] cache-miss → network load", request.tableName, "force:", request.force);
   logMetadataLoadTrace(request.traceLogger, trace, "cache-miss", { cacheStatus: request.force ? "refresh" : "miss", force: request.force === true });
   const scopeKey = metadataScopeKey(scope);
   const invalidationStampAtStart = tableMetadataInvalidationStamps.get(scopeKey) ?? 0;
@@ -161,6 +183,7 @@ export async function loadTableMetadata(request: TableMetadataRequest): Promise<
       async () => {
         // Column discovery can be especially slow on Oracle. Start row-identity
         // discovery independently so query preflight can reuse it without waiting.
+        console.log("[DBX][table-metadata] remote getColumns", request.tableName);
         const columnsPromise = api.getColumns(request.connectionId, request.database, request.schema ?? "", request.tableName, request.catalog);
         const indexesPromise = loadTableIndexes(request).catch((): IndexInfo[] => []);
         const columns = await columnsPromise;
@@ -184,6 +207,9 @@ export async function loadTableMetadata(request: TableMetadataRequest): Promise<
     // 必须在 unregister 前比较：最后一个在途加载注销时会顺带清掉代数记录
     if (invalidationStampAtStart === (tableMetadataInvalidationStamps.get(scopeKey) ?? 0)) {
       tableMetadataCache.set(scope, metadata);
+      // 写磁盘缓存（100 天 TTL），失败不影响主流程
+      console.log("[DBX][table-metadata] saved to disk", request.tableName);
+      void saveTableMetadataToDisk(scope, metadata);
     }
   } finally {
     unregisterInFlightTableMetadataScope(scopeKey);
@@ -202,15 +228,24 @@ export function invalidateTableMetadataCache(match: MetadataCacheInvalidation): 
   // 2) 甩掉该 scope 的在途登记——否则失效后启动的 non-force 调用会加入
   //    失效前的旧加载，且其失效代数取自失效之后，完成时把旧结果写回缓存
   const matches = metadataCacheInvalidationMatcher(match);
+  const deletedScopeKeys: string[] = [];
   for (const [scopeKey, entry] of inFlightTableMetadataScopes) {
     if (!matches(entry.parts)) continue;
     bumpTableMetadataInvalidationStamp(scopeKey);
     tableMetadataCoordinator.clear(scopeKey);
+    deletedScopeKeys.push(scopeKey);
   }
+  // 收集内存缓存中将被删除条目的 scopeKey，用于同步删除对应磁盘缓存
+  tableMetadataCache.forEachEntry((key, entry) => {
+    if (matches(entry.scope)) deletedScopeKeys.push(key);
+  });
   for (const [scopeKey, entry] of tableIndexesLoads) {
     if (matches(entry.parts)) tableIndexesLoads.delete(scopeKey);
   }
-  return tableMetadataCache.invalidate(match);
+  const removed = tableMetadataCache.invalidate(match);
+  // 删除磁盘缓存（按已收集的 scopeKey 精确删除）
+  void deleteTableMetadataDiskCacheByScopeKeys(deletedScopeKeys);
+  return removed;
 }
 
 export function clearTableMetadataCache(): void {
@@ -220,4 +255,6 @@ export function clearTableMetadataCache(): void {
   tableMetadataCoordinator.clear();
   tableIndexesLoads.clear();
   tableMetadataCache.clear();
+  // 清磁盘缓存（删除所有 tm: 前缀）
+  void clearTableMetadataDiskCache();
 }

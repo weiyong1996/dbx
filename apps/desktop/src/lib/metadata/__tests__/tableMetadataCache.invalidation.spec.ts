@@ -4,11 +4,23 @@ import type { ColumnInfo } from "@/types/database";
 const mocks = vi.hoisted(() => ({
   getColumns: vi.fn(),
   listIndexes: vi.fn(),
+  loadTableMetadataFromDisk: vi.fn().mockResolvedValue(null),
+  saveTableMetadataToDisk: vi.fn().mockResolvedValue(undefined),
+  deleteTableMetadataDiskCacheByScopeKeys: vi.fn().mockResolvedValue(undefined),
+  clearTableMetadataDiskCache: vi.fn().mockResolvedValue(undefined),
 }));
 
 vi.mock("@/lib/backend/api", () => ({
   getColumns: mocks.getColumns,
   listIndexes: mocks.listIndexes,
+}));
+
+vi.mock("@/lib/metadata/tableMetadataDiskCache", () => ({
+  loadTableMetadataFromDisk: mocks.loadTableMetadataFromDisk,
+  saveTableMetadataToDisk: mocks.saveTableMetadataToDisk,
+  deleteTableMetadataDiskCacheByScopeKeys: mocks.deleteTableMetadataDiskCacheByScopeKeys,
+  clearTableMetadataDiskCache: mocks.clearTableMetadataDiskCache,
+  TABLE_METADATA_DISK_CACHE_TTL_MS: 100 * 24 * 60 * 60 * 1000,
 }));
 
 import { clearTableMetadataCache, getCachedTableMetadata, invalidateTableMetadataCache, loadTableMetadata } from "@/lib/metadata/tableMetadataCache";
@@ -21,9 +33,13 @@ const request = { connectionId: "c1", database: "db", schema: "public", tableNam
 
 describe("tableMetadataCache invalidation", () => {
   beforeEach(() => {
-    clearTableMetadataCache();
     vi.clearAllMocks();
     mocks.listIndexes.mockResolvedValue([]);
+    mocks.loadTableMetadataFromDisk.mockResolvedValue(null);
+    mocks.saveTableMetadataToDisk.mockResolvedValue(undefined);
+    mocks.deleteTableMetadataDiskCacheByScopeKeys.mockResolvedValue(undefined);
+    mocks.clearTableMetadataDiskCache.mockResolvedValue(undefined);
+    clearTableMetadataCache();
   });
 
   it("a stale in-flight load cannot overwrite the cache after invalidation", async () => {
@@ -35,6 +51,8 @@ describe("tableMetadataCache invalidation", () => {
       }),
     );
     const oldLoad = loadTableMetadata({ ...request });
+    // 等旧加载通过磁盘读取后到达 coordinator.run（注册 getColumns 调用）
+    await vi.waitFor(() => expect(mocks.getColumns).toHaveBeenCalled());
 
     // 结构保存：作废缓存并 force 拉新
     invalidateTableMetadataCache({ connectionId: "c1", database: "db", tableName: "users" });
@@ -58,6 +76,8 @@ describe("tableMetadataCache invalidation", () => {
       }),
     );
     const oldLoad = loadTableMetadata({ ...request });
+    // 等旧加载通过磁盘读取后到达 coordinator.run
+    await vi.waitFor(() => expect(mocks.getColumns).toHaveBeenCalled());
 
     invalidateTableMetadataCache({ connectionId: "c1", database: "db", tableName: "users" });
 
@@ -85,16 +105,18 @@ describe("tableMetadataCache invalidation", () => {
     );
     const loadA = loadTableMetadata({ ...request });
     const loadB = loadTableMetadata({ ...requestB });
-    await Promise.resolve();
+    // 等两个加载都通过磁盘读取后到达 coordinator.run
+    await vi.waitFor(() => expect(mocks.getColumns).toHaveBeenCalledTimes(2));
 
     // 仅失效 A
     invalidateTableMetadataCache({ connectionId: "c1", database: "db", tableName: "users" });
 
     // B 的 follower 必须复用原在途请求：总请求数保持 2（A 一次 + B 一次）。
-    // 先让出 microtask，coordinator 的 load 才会真正启动，断言才有观察力
     const followerB = loadTableMetadata({ ...requestB });
-    await Promise.resolve();
-    expect(mocks.getColumns).toHaveBeenCalledTimes(2);
+    // 等 followerB 通过磁盘读取到达 coordinator.run（被原在途 dedup，不新增 getColumns）
+    await vi.waitFor(() => {
+      expect(mocks.getColumns).toHaveBeenCalledTimes(2);
+    });
 
     // B 返回后正常写入缓存
     releases.get("orders")?.([column("order_id")]);

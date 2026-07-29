@@ -1,4 +1,4 @@
-export const SCHEMA_TREE_CACHE_TTL_MS = 15 * 60 * 1000;
+export const SCHEMA_TREE_CACHE_TTL_MS = 100 * 24 * 60 * 60 * 1000;
 
 export interface SchemaTreeCacheEnvelope<T> {
   version: 2;

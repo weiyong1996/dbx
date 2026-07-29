@@ -120,7 +120,7 @@ import { filterObjectBrowserTableColumns } from "@/lib/table/objectBrowserTableI
 import { createSidePanelRequestGuard } from "@/lib/table/sidePanelRequestGuard";
 import { runBatchTableTruncate } from "@/lib/table/batchTableTruncate";
 import { tableColumnDefaultDisplayValue } from "@/lib/table/tableColumnDefaultPresentation";
-import { cacheObjectBrowserRows, createObjectBrowserRowsCacheWriteToken, getCachedObjectBrowserRows, type ObjectBrowserRowsCacheScope, type ObjectBrowserRowsCacheWriteToken } from "@/lib/table/objectBrowserRowsCache";
+import { cacheObjectBrowserRows, createObjectBrowserRowsCacheWriteToken, getCachedObjectBrowserRows, loadObjectBrowserRowsFromDisk, type ObjectBrowserRowsCacheScope, type ObjectBrowserRowsCacheWriteToken } from "@/lib/table/objectBrowserRowsCache";
 import { createObjectBrowserRowsLoadGuard, type ObjectBrowserRowsLoadHandle } from "@/lib/table/objectBrowserRowsLoadGuard";
 
 type ObjectFilter = ObjectBrowserFilter;
@@ -2288,6 +2288,13 @@ async function loadObjects(options?: { allowCached?: boolean }) {
     const cachedRows = getCachedObjectBrowserRows(request.scope);
     if (cachedRows) {
       applyObjectBrowserRows(cachedRows);
+      finishObjectBrowserRowsLoad();
+      return;
+    }
+    // 内存 miss：尝试磁盘缓存
+    const diskRows = await loadObjectBrowserRowsFromDisk(request.scope);
+    if (diskRows) {
+      applyObjectBrowserRows(diskRows);
       finishObjectBrowserRowsLoad();
       return;
     }

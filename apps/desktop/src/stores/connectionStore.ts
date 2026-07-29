@@ -92,6 +92,7 @@ import {
 } from "@/lib/table/tableTree";
 import { hasTreeNodeDatabaseContext, normalizeCataloglessDatabaseNodes, treeNodeSchemaCachePrefix } from "@/lib/sidebar/treeNodeContext";
 import { decodeSchemaTreeCache, encodeSchemaTreeCache } from "@/lib/metadata/schemaTreeCache";
+import { deleteMetadataDiskCacheByScopeKeys as deleteMetadataListPageDiskCacheByScopeKeys, loadMetadataFromDisk as loadMetadataListPageFromDisk, saveMetadataToDisk as saveMetadataListPageToDisk } from "@/lib/metadata/metadataDiskCache";
 import { sortSidebarTreeChildrenForParent } from "@/lib/sidebar/sidebarNodeOrdering";
 import { connectionSupportsDatabaseUserAdmin } from "@/lib/database/databaseUserAdmin";
 import { getTableMetadataCapabilities } from "@/lib/table/tableMetadataCapabilities";
@@ -108,7 +109,7 @@ import { appendVisibleDatabaseSelection } from "@/lib/connection/connectionVisib
 import { configuredDatabaseProductName, connectionConfigFingerprint, normalizeDatabaseConnectionInfo } from "@/lib/connection/connectionDatabaseInfo";
 import { createMetadataLoadTrace, logMetadataLoadTrace, MetadataLoadCoordinator, type MetadataLoadTraceLogger } from "@/lib/metadata/metadataLoadCoordinator";
 import type { MetadataScopeInput } from "@/lib/metadata/metadataLoadScope";
-import { MetadataResultCache, type MetadataCacheInvalidation } from "@/lib/metadata/metadataResultCache";
+import { MetadataResultCache, metadataCacheInvalidationMatcher, type MetadataCacheInvalidation } from "@/lib/metadata/metadataResultCache";
 import { invalidateTableMetadataCache } from "@/lib/metadata/tableMetadataCache";
 import { invalidateObjectBrowserRowsCache } from "@/lib/table/objectBrowserRowsCache";
 import { MetadataTaskLimiter } from "@/lib/metadata/metadataTaskLimiter";
@@ -129,6 +130,7 @@ const DISCONNECT_REQUEST_TIMEOUT_MS = 5_000;
 const DEFAULT_KEEPALIVE_INTERVAL_SECS = 30;
 const METADATA_LIST_PAGE_CACHE_TTL_MS = 30_000;
 const METADATA_LIST_PAGE_CACHE_MAX_ENTRIES = 160;
+const METADATA_LIST_PAGE_DISK_KEY_PREFIX = "mlp:";
 const SIDEBAR_DATABASE_STORAGE_CACHE_TTL_MS = 30_000;
 export const COMPLETION_METADATA_CONCURRENCY = 2;
 const MONGO_LEGACY_DRIVER_PROFILE = "mongodb-legacy";
@@ -448,6 +450,7 @@ export const useConnectionStore = defineStore("connection", () => {
     if (!options?.force) {
       const cached = metadataListPageCache.get(scope);
       if (cached) {
+        console.log("[DBX][metadata-list-page] memory-cache-hit", scope.kind, cached.value.length, "stale:", cached.stale);
         logMetadataLoadTrace(metadataTraceLogger, trace, "cache-hit", {
           cacheStatus: cached.stale ? "stale" : "hit",
           resultCount: cached.value.length,
@@ -457,11 +460,33 @@ export const useConnectionStore = defineStore("connection", () => {
       }
     }
 
+    // 内存未命中：尝试磁盘缓存（force 模式跳过）
+    if (!options?.force) {
+      const diskResult = await loadMetadataListPageFromDisk<T>(METADATA_LIST_PAGE_DISK_KEY_PREFIX, scope);
+      if (diskResult) {
+        console.log("[DBX][metadata-list-page] disk-cache-hit", scope.kind, diskResult.data.length, "stale:", diskResult.isStale);
+        // 回填内存缓存，让后续 30s 内的访问直接命中内存
+        metadataListPageCache.set(scope, diskResult.data, { cachedAt: diskResult.cachedAtMs });
+        logMetadataLoadTrace(metadataTraceLogger, trace, "disk-cache-hit", {
+          cacheStatus: diskResult.isStale ? "stale" : "hit",
+          resultCount: diskResult.data.length,
+          stale: diskResult.isStale,
+        });
+        return diskResult.data;
+      }
+      console.log("[DBX][metadata-list-page] disk-cache-miss", scope.kind);
+    }
+
+    // 内存和磁盘都 miss：网络加载
+    console.log("[DBX][metadata-list-page] cache-miss → network load", scope.kind, "force:", options?.force);
     logMetadataLoadTrace(metadataTraceLogger, trace, "cache-miss", { cacheStatus: options?.force ? "refresh" : "miss", force: options?.force === true });
     const errorRevision = connectionErrorRevision(scope.connectionId);
     const result = await load();
     clearConnectionErrorIfUnchanged(scope.connectionId, errorRevision);
     metadataListPageCache.set(scope, result);
+    // 写磁盘缓存（100 天 TTL），失败不影响主流程
+    console.log("[DBX][metadata-list-page] saved to disk", scope.kind, result.length);
+    void saveMetadataListPageToDisk(METADATA_LIST_PAGE_DISK_KEY_PREFIX, scope, result);
     logMetadataLoadTrace(metadataTraceLogger, trace, "done", {
       cacheStatus: options?.force ? "refresh" : "miss",
       resultCount: result.length,
@@ -1433,6 +1458,7 @@ export const useConnectionStore = defineStore("connection", () => {
   }
 
   function listTablesWithOptionalTableNameFilter(connectionId: string, database: string, schema: string, filter?: string, limit?: number, offset?: number, objectTypes?: DatabaseObjectTreeKind[], catalog?: string, tableNameFilter?: TableNameFilter) {
+    console.log("[DBX][listTables] remote call", connectionId, database, schema, "filter:", filter, "limit:", limit, "offset:", offset);
     if (tableNameFilter) return api.listTables(connectionId, database, schema, filter, limit, offset, objectTypes, catalog, tableNameFilter);
     if (catalog) return api.listTables(connectionId, database, schema, filter, limit, offset, objectTypes, catalog);
     if (objectTypes) return api.listTables(connectionId, database, schema, filter, limit, offset, objectTypes);
@@ -1473,6 +1499,14 @@ export const useConnectionStore = defineStore("connection", () => {
   }
 
   function invalidateMetadataCaches(match: MetadataCacheInvalidation): number {
+    // 收集 metadataListPageCache 中将被删除条目的 scopeKey，用于同步删除对应磁盘缓存
+    const deletedListPageScopeKeys: string[] = [];
+    metadataListPageCache.forEachEntry((key, entry) => {
+      if (metadataCacheInvalidationMatcher(match)(entry.scope)) deletedListPageScopeKeys.push(key);
+    });
+    if (deletedListPageScopeKeys.length) {
+      void deleteMetadataListPageDiskCacheByScopeKeys(METADATA_LIST_PAGE_DISK_KEY_PREFIX, deletedListPageScopeKeys);
+    }
     return metadataListPageCache.invalidate(match) + invalidateTableMetadataCache(match) + invalidateObjectBrowserRowsCache(match);
   }
 
@@ -1609,6 +1643,68 @@ export const useConnectionStore = defineStore("connection", () => {
       nodeKind: options.node.type,
       catalog: options.node.catalog,
     });
+
+    // 搜索时优先从本地全量缓存过滤，不触发远程请求
+    if (searchFilter) {
+      // 1. 先在内存缓存中查找匹配的全量（无 searchFilter）TableInfo 缓存
+      let allTables: TableInfo[] | null = null;
+      const matchConnectionId = options.node.connectionId;
+      const matchDatabase = options.node.database;
+      const matchSchema = options.querySchema;
+      metadataListPageCache.forEachEntry((_key, entry) => {
+        if (allTables) return;
+        const s = entry.scope;
+        if (s.kind !== "table-list-page") return;
+        if (s.searchFilter) return;
+        if (s.connectionId !== matchConnectionId) return;
+        if (s.database !== matchDatabase) return;
+        if (s.schema !== matchSchema) return;
+        if (!Array.isArray(entry.value) || entry.value.length === 0) return;
+        const first = entry.value[0];
+        if (first && "name" in first && !("objectType" in first)) {
+          allTables = entry.value as TableInfo[];
+        }
+      });
+
+      // 2. 内存没有：通过 loadCachedMetadataListPage 加载全量数据（走磁盘缓存→网络兜底）
+      if (!allTables) {
+        console.log("[DBX][metadata-list-page] search-loading-full-list", searchFilter);
+        const fullScope = metadataListCacheScope({
+          kind: "table-list-page",
+          connectionId: options.node.connectionId,
+          database: options.node.database,
+          schema: options.querySchema,
+          nodeKind: options.node.type,
+          objectTypes: options.objectTypes,
+          limit: options.pageSize + 1,
+          offset: options.offset,
+          sidebarDisplayMode: "grouped",
+          extra: tableNameFilterMetadataExtra(tableNameFilter),
+        });
+        const loaded = await loadCachedMetadataListPage<TableInfo[]>(fullScope, () =>
+          listTablesWithOptionalTableNameFilter(options.node.connectionId!, options.node.database!, options.querySchema, undefined, options.pageSize + 1, options.offset, options.objectTypes, options.node.catalog, tableNameFilter),
+        );
+        allTables = loaded;
+      }
+
+      if (allTables && allTables.length > 0) {
+        console.log("[DBX][metadata-list-page] search-local-filter", searchFilter, allTables.length, "tables");
+        const normalized = searchFilter.toLowerCase();
+        const filtered = allTables.filter((t) => t.name.toLowerCase().includes(normalized));
+        const objects = mergeTableInfosIntoObjects([], filtered, options.effectiveSchema);
+        const children = objectGroupChildrenFromObjects({
+          node: options.node,
+          parentNodeId: options.parentNodeId,
+          effectiveSchema: options.effectiveSchema,
+          objectTypes: options.objectTypes,
+          objects,
+        });
+        return { children, objectCount: children.length, hasMore: false, nextOffset: 0 };
+      }
+      console.log("[DBX][metadata-list-page] search-empty", searchFilter);
+      return { children: [], objectCount: 0, hasMore: false, nextOffset: 0 };
+    }
+
     const fetchLimit = searchFilter ? options.pageSize : options.pageSize + 1;
     const fetchOffset = searchFilter ? undefined : options.offset;
     const tables = await loadCachedMetadataListPage<TableInfo[]>(
@@ -1718,6 +1814,64 @@ export const useConnectionStore = defineStore("connection", () => {
       schema: options.effectiveSchema ?? options.querySchema,
       nodeKind: "simple-tables",
     });
+
+    // 搜索时优先从本地全量缓存过滤
+    if (searchFilter) {
+      // 1. 先在内存缓存中查找匹配的全量（无 searchFilter）TableInfo 缓存
+      let allTables: TableInfo[] | null = null;
+      const matchConnectionId = options.connectionId;
+      const matchDatabase = options.database;
+      const matchSchema = options.querySchema;
+      metadataListPageCache.forEachEntry((_key, entry) => {
+        if (allTables) return;
+        const s = entry.scope;
+        if (s.kind !== "table-list-page") return;
+        if (s.searchFilter) return;
+        if (s.connectionId !== matchConnectionId) return;
+        if (s.database !== matchDatabase) return;
+        if (s.schema !== matchSchema) return;
+        if (!Array.isArray(entry.value) || entry.value.length === 0) return;
+        const first = entry.value[0];
+        if (first && "name" in first && !("objectType" in first)) {
+          allTables = entry.value as TableInfo[];
+        }
+      });
+
+      // 2. 内存没有：通过 loadCachedMetadataListPage 加载全量数据（走磁盘缓存→网络兜底）
+      if (!allTables) {
+        console.log("[DBX][metadata-list-page] search-loading-full-list (simple)", searchFilter);
+        const fullScope = metadataListCacheScope({
+          kind: "table-list-page",
+          connectionId: options.connectionId,
+          database: options.database,
+          schema: options.querySchema,
+          nodeKind: "simple-tables",
+          limit: options.pageSize + 1,
+          offset: options.offset,
+          sidebarDisplayMode: "simple",
+          extra: tableNameFilterMetadataExtra(tableNameFilter),
+        });
+        const loaded = await loadCachedMetadataListPage<TableInfo[]>(fullScope, () => listTablesWithOptionalTableNameFilter(options.connectionId, options.database, options.querySchema, undefined, options.pageSize + 1, options.offset, undefined, undefined, tableNameFilter));
+        allTables = loaded;
+      }
+
+      if (allTables && allTables.length > 0) {
+        console.log("[DBX][metadata-list-page] search-local-filter (simple)", searchFilter, allTables.length, "tables");
+        const normalized = searchFilter.toLowerCase();
+        const filtered = allTables.filter((t) => t.name.toLowerCase().includes(normalized));
+        const children = buildTableTreeNodes({
+          nodeId: options.nodeId,
+          connectionId: options.connectionId,
+          database: options.database,
+          schema: options.effectiveSchema,
+          tables: filtered,
+        });
+        return { children, objectCount: children.length, hasMore: false, nextOffset: 0 };
+      }
+      console.log("[DBX][metadata-list-page] search-empty (simple)", searchFilter);
+      return { children: [], objectCount: 0, hasMore: false, nextOffset: 0 };
+    }
+
     const fetchLimit = searchFilter ? options.pageSize : options.pageSize + 1;
     const fetchOffset = searchFilter ? undefined : options.offset;
     const tables = await loadCachedMetadataListPage<TableInfo[]>(
@@ -5543,7 +5697,14 @@ export const useConnectionStore = defineStore("connection", () => {
 
         if (isSchemaAwareDatabase(connectionId)) {
           if (normalizedFilter || limit) {
-            let results: SqlCompletionTable[] = [];
+            // 优先从本地缓存搜索，不触发远程请求
+            let results: SqlCompletionTable[] = lookupLocalCompletionTables(connectionId, database, normalizedFilter, limit, undefined, catalog);
+            if (results.length > 0) {
+              completionTablesCache.value[cacheKey] = results;
+              evictOldestCacheEntries(completionTablesCache.value, COMPLETION_CACHE_MAX);
+              return results;
+            }
+            // 本地没数据时才走远程
             try {
               results = await listCompletionAssistantTables(connectionId, database, trimmedFilter, limit, schema, globalSearch, currentSchema);
             } catch {

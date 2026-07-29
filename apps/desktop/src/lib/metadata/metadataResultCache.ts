@@ -94,6 +94,12 @@ export class MetadataResultCache<T> {
     return this.entries.size;
   }
 
+  forEachEntry(callback: (key: string, entry: MetadataCacheEntry<T>) => void): void {
+    for (const [key, entry] of this.entries) {
+      callback(key, entry);
+    }
+  }
+
   private evictOldest(): void {
     while (this.entries.size > this.options.maxEntries) {
       const oldest = this.entries.keys().next().value;
