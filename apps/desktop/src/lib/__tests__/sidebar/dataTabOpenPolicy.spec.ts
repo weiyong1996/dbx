@@ -66,6 +66,21 @@ describe("dataTabOpenPolicy", () => {
     expect(findExistingDataTabCandidate([otherTable], usersTarget, { openMode: "default", reuseMode: "same-table" })).toBeUndefined();
   });
 
+  it("treats the normalized predicate as part of the same-table identity", () => {
+    const firstFilter = dataTab("users-1", "users");
+    firstFilter.tableMeta = { schema: "public", tableName: "users", columns: [], primaryKeys: [] };
+    firstFilter.whereInput = '"id" = 1';
+    const secondFilter = dataTab("users-2", "users");
+    secondFilter.tableMeta = { schema: "public", tableName: "users", columns: [], primaryKeys: [] };
+    secondFilter.whereInput = '"id" = 2';
+
+    expect(findExistingDataTabCandidate([firstFilter, secondFilter], { ...usersTarget, whereInput: ' WHERE "id" = 2;; ' }, { openMode: "default", reuseMode: "same-table" })).toEqual({
+      tab: secondFilter,
+      match: "same-table",
+    });
+    expect(findExistingDataTabCandidate([firstFilter, secondFilter], { ...usersTarget, whereInput: '"id" = 3' }, { openMode: "default", reuseMode: "same-table" })).toBeUndefined();
+  });
+
   it("reuses the active safe data tab for a different table", () => {
     const active = dataTab("orders", "orders");
 

@@ -150,7 +150,7 @@ describe("useNavigationTargets openTableTarget", () => {
 
     expect(mocks.invalidateCompletionTableCache).toHaveBeenCalledWith("connection-1", "app", "users", "public", "catalog-1");
     expect(mocks.getColumns).toHaveBeenCalledTimes(2);
-    expect(mocks.tabs.map((tab) => tab.tableMeta?.primaryKeys)).toEqual([["fresh_id"], ["fresh_id"]]);
+    expect(mocks.tabs.map((tab) => tab.tableMeta?.primaryKeys)).toEqual([["fresh_id"]]);
   });
 
   it("keeps row identity pending when shared metadata loading fails", async () => {

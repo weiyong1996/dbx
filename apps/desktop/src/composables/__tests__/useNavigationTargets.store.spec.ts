@@ -135,6 +135,119 @@ describe("useNavigationTargets with the real query store", () => {
     expect(queryStore.tabs.map((tab) => tab.sql)).toEqual(['SELECT * FROM users WHERE "id" = 1', 'SELECT * FROM users WHERE "id" = 2']);
   });
 
+  it("reuses a repeated normalized predicate", async () => {
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users" };
+
+    await navigation.openDatabaseSearchTarget({ ...target, whereInput: ' WHERE "id" = 1;; ' });
+    const originalTab = queryStore.tabs[0]!;
+    const originalResult = originalTab.result;
+    await navigation.openDatabaseSearchTarget({ ...target, whereInput: '"id" = 1' });
+
+    expect(queryStore.tabs).toHaveLength(1);
+    expect(queryStore.activeTabId).toBe(originalTab.id);
+    expect(originalTab.whereInput).toBe('"id" = 1');
+    expect(originalTab.sql).toBe('SELECT * FROM users WHERE "id" = 1');
+    expect(originalTab.result).toBe(originalResult);
+  });
+
+  it("reopens the matching second filtered tab instead of the first same-table tab", async () => {
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users" };
+
+    await navigation.openDatabaseSearchTarget({ ...target, whereInput: '"id" = 1' });
+    const firstTabId = queryStore.activeTabId;
+    await navigation.openDatabaseSearchTarget({ ...target, whereInput: '"id" = 2' });
+    const secondTabId = queryStore.activeTabId;
+    queryStore.switchTab(firstTabId!);
+
+    await navigation.openDatabaseSearchTarget({ ...target, whereInput: ' WHERE "id" = 2; ' });
+
+    expect(queryStore.tabs).toHaveLength(2);
+    expect(queryStore.activeTabId).toBe(secondTabId);
+    expect(queryStore.tabs.find((tab) => tab.id === secondTabId)?.whereInput).toBe('"id" = 2');
+  });
+
+  it("activates an identical predicate while its first query is still loading", async () => {
+    const connectionGates: Array<() => void> = [];
+    mocks.connectionStore.ensureConnected.mockImplementation(
+      () =>
+        new Promise<void>((resolve) => {
+          connectionGates.push(resolve);
+        }),
+    );
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users", whereInput: '"id" = 1' };
+
+    const firstOpen = navigation.openTableTarget(target);
+    await vi.waitFor(() => expect(queryStore.tabs[0]?.isExecuting).toBe(true));
+    const loadingTabId = queryStore.tabs[0]!.id;
+    await navigation.openTableTarget({ ...target, whereInput: ' WHERE "id" = 1;; ' });
+
+    expect(queryStore.tabs).toHaveLength(1);
+    expect(queryStore.activeTabId).toBe(loadingTabId);
+    expect(connectionGates).toHaveLength(1);
+
+    connectionGates[0]?.();
+    await firstOpen;
+  });
+
+  it("applies tableInfoTab when activating an existing identity without replacing its data or edits", async () => {
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users" };
+
+    await navigation.openTableTarget(target);
+    const tab = queryStore.tabs[0]!;
+    const result = tab.result;
+    tab.sql = "SELECT custom_sql FROM users";
+    tab.pendingDataChangeCount = 2;
+    tab.pinned = true;
+
+    await navigation.openTableTarget(target, { tableInfoTab: "ddl" });
+
+    expect(queryStore.tabs).toHaveLength(1);
+    expect(tab.tableInfoTab).toBe("ddl");
+    expect(tab.sql).toBe("SELECT custom_sql FROM users");
+    expect(tab.result).toBe(result);
+    expect(tab.pendingDataChangeCount).toBe(2);
+    expect(tab.pinned).toBe(true);
+  });
+
+  it("keeps direct navigation always-new and reuses only a safe active tab in active-tab mode", async () => {
+    mocks.settingsStore.editorSettings.dataTabReuseMode = "always-new";
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users" };
+
+    await navigation.openTableTarget(target);
+    await navigation.openTableTarget(target);
+    expect(queryStore.tabs).toHaveLength(2);
+
+    mocks.settingsStore.editorSettings.dataTabReuseMode = "active-tab";
+    await navigation.openTableTarget({ ...target, tableName: "orders" });
+    expect(queryStore.tabs).toHaveLength(2);
+    expect(queryStore.tabs.find((tab) => tab.id === queryStore.activeTabId)?.tableMeta?.tableName).toBe("orders");
+  });
+
+  it.each([
+    ["pinned", { pinned: true }],
+    ["executing", { isExecuting: true, executionId: "running" }],
+    ["manual transaction", { txnSessionId: "txn-1" }],
+    ["pending edits", { pendingDataChangeCount: 1 }],
+  ])("does not replace an active %s tab during direct navigation", async (_label, patch) => {
+    mocks.settingsStore.editorSettings.dataTabReuseMode = "active-tab";
+    const { navigation, queryStore } = await setupNavigation();
+    const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users" };
+    await navigation.openTableTarget(target);
+    const original = queryStore.tabs[0]!;
+    Object.assign(original, patch);
+
+    await navigation.openTableTarget({ ...target, tableName: "orders" });
+
+    expect(queryStore.tabs).toHaveLength(2);
+    expect(original.tableMeta?.tableName).toBe("users");
+    expect(original.sql).toBe("SELECT * FROM users");
+  });
+
   it("reuses the same object-browser table without reusing tabs across different tables", async () => {
     const { navigation, queryStore } = await setupNavigation();
     const target = { connectionId: "connection-1", database: "app", schema: "public", tableName: "users", tableType: "TABLE" };

@@ -1,12 +1,14 @@
 import * as api from "@/lib/backend/api";
 import { connectionObjectTreeNodeSchema, effectiveDatabaseTypeForConnection, metadataSchemaForConnection } from "@/lib/database/jdbcDialect";
 import { invalidateTableMetadataCache, loadTableMetadata } from "@/lib/metadata/tableMetadataCache";
-import { canApplyDataTabMetadata } from "@/lib/sidebar/dataTabOpenPolicy";
+import { canApplyDataTabMetadata, findExistingDataTabCandidate } from "@/lib/sidebar/dataTabOpenPolicy";
 import { isNoSnapshotErrorResult, isQueryExecutionErrorResult } from "@/lib/query/queryResultError";
 import { buildTableSelectSql } from "@/lib/table/tableSelectSql";
+import { normalizeWhereInput } from "@/lib/table/whereInput";
 import { editableRowIdentifierColumns, usesSyntheticRowIdKey } from "@/lib/table/tableEditing";
 import { tableOpenPageLimit } from "@/lib/table/tableOpenPageLimit";
 import { uuid } from "@/lib/common/utils";
+import { canActivateExistingDataTableTab } from "@/lib/tabs/dataTabActivation";
 import { beginDataTabNavigation, endDataTabNavigation, isCurrentDataTabNavigation } from "@/lib/tabs/dataTabNavigationGeneration";
 import { useSidebarDataOpenRuntime } from "@/composables/useSidebarDataOpenRuntime";
 import { useConnectionStore } from "@/stores/connectionStore";
@@ -35,15 +37,70 @@ async function openTableTarget(target: NavigationTarget, options: { tableInfoTab
   const config = connectionStore.getConfig(target.connectionId);
   const tableSchema = connectionObjectTreeNodeSchema(config, target.database, target.schema);
   const tabTitle = target.catalog ? `${target.catalog}.${tableSchema || target.database}.${target.tableName}` : tableSchema ? `${tableSchema}.${target.tableName}` : target.tableName;
+  const normalizedWhereInput = normalizeWhereInput(target.whereInput) || undefined;
   if (config?.db_type === "qdrant" || config?.db_type === "milvus" || config?.db_type === "weaviate" || config?.db_type === "chromadb") {
     await connectionStore.ensureConnected(target.connectionId);
     const tabId = queryStore.createTab(target.connectionId, target.database || "default", tabTitle, "vector");
     queryStore.updateSql(tabId, target.tableName);
     return;
   }
-  const tabId = queryStore.createTab(target.connectionId, target.database, tabTitle, "data", tableSchema, undefined, undefined, { forceNew: true });
+  const dataTabTarget = {
+    connectionId: target.connectionId,
+    database: target.database,
+    schema: tableSchema,
+    catalog: target.catalog,
+    tableName: target.tableName,
+    whereInput: normalizedWhereInput,
+  };
+  const existingCandidate = findExistingDataTabCandidate(queryStore.tabs, dataTabTarget, {
+    openMode: "default",
+    reuseMode: settingsStore.editorSettings.dataTabReuseMode,
+    activeTabId: queryStore.activeTabId,
+  });
+  const existingIdentityTab = existingCandidate?.match === "same-table" ? existingCandidate.tab : undefined;
+
+  // An exact identity/predicate match is activation, not replacement. It is
+  // safe to activate while loading (or when pinned/dirty), and the requested
+  // information subpage must not rewrite its SQL, result, or edit state.
+  if (existingIdentityTab && (existingIdentityTab.isExecuting || canActivateExistingDataTableTab(existingIdentityTab, { activateExecuting: false }))) {
+    if (options.tableInfoTab !== undefined) existingIdentityTab.tableInfoTab = options.tableInfoTab;
+    queryStore.switchTab(existingIdentityTab.id);
+    return;
+  }
+
+  const reusedActiveTab = existingCandidate?.match === "active-tab" ? existingCandidate.tab : undefined;
+  const tabId = reusedActiveTab?.id ?? queryStore.createTab(target.connectionId, target.database, tabTitle, "data", tableSchema, undefined, target.catalog, { forceNew: true });
+  if (reusedActiveTab) {
+    queryStore.switchTab(reusedActiveTab.id);
+    reusedActiveTab.title = tabTitle;
+    reusedActiveTab.schema = tableSchema;
+    reusedActiveTab.catalog = target.catalog;
+    reusedActiveTab.orderByInput = undefined;
+    reusedActiveTab.previewSql = undefined;
+    reusedActiveTab.resultSortColumn = undefined;
+    reusedActiveTab.resultSortColumnIndex = undefined;
+    reusedActiveTab.resultSortDirection = undefined;
+    reusedActiveTab.resultSortMode = undefined;
+    reusedActiveTab.resultLocalSortOriginalRows = undefined;
+    reusedActiveTab.resultLocalSortOriginalMongoDocuments = undefined;
+    reusedActiveTab.resultLocalSortOriginalMongoCopyDocuments = undefined;
+    reusedActiveTab.resultSortedSql = undefined;
+    reusedActiveTab.resultPageSql = undefined;
+    reusedActiveTab.resultPageLimit = undefined;
+    reusedActiveTab.resultPageOffset = undefined;
+    reusedActiveTab.resultTotalRowCount = undefined;
+    reusedActiveTab.resultTotalRowCountLoading = undefined;
+    reusedActiveTab.queryAnalysis = undefined;
+    reusedActiveTab.querySourceColumns = undefined;
+    reusedActiveTab.queryEditabilityReason = undefined;
+    reusedActiveTab.result = undefined;
+    reusedActiveTab.results = undefined;
+  }
   const targetTab = queryStore.tabs.find((tab) => tab.id === tabId);
-  if (targetTab) targetTab.tableInfoTab = options.tableInfoTab;
+  if (targetTab) {
+    targetTab.whereInput = normalizedWhereInput;
+    if (options.tableInfoTab !== undefined) targetTab.tableInfoTab = options.tableInfoTab;
+  }
   // Stamp the new table identity synchronously so SQL rebuilds (refresh,
   // filters, row count) never read a stale tableMeta from a reused tab or
   // fall back to parsing the schema-qualified tab title (issue #3613).
@@ -117,7 +174,7 @@ async function openTableTarget(target: NavigationTarget, options: { tableInfoTab
         tableType: targetTableType,
         columns: columns.map((column) => column.name),
         primaryKeys,
-        whereInput: target.whereInput,
+        whereInput: normalizedWhereInput,
         limit: pageLimit,
       });
       if (!isPreparationCurrent()) return;
@@ -143,7 +200,7 @@ async function openTableTarget(target: NavigationTarget, options: { tableInfoTab
       database: target.database,
       tableName: target.tableName,
       tableType: targetTableType,
-      whereInput: target.whereInput,
+      whereInput: normalizedWhereInput,
       limit: pageLimit,
     });
     if (!isPreparationCurrent()) return;
@@ -186,7 +243,7 @@ async function openTableTarget(target: NavigationTarget, options: { tableInfoTab
         database: target.database,
         tableName: target.tableName,
         tableType: targetTableType,
-        whereInput: target.whereInput,
+        whereInput: normalizedWhereInput,
         limit: 0,
       });
       if (!isCurrentTarget()) return;
@@ -230,7 +287,7 @@ async function openTableTarget(target: NavigationTarget, options: { tableInfoTab
           database: target.database,
           tableName: target.tableName,
           tableType: targetTableType,
-          whereInput: target.whereInput,
+          whereInput: normalizedWhereInput,
           primaryKeys,
           columns: columns.map((column) => column.name),
           includeRowId: true,

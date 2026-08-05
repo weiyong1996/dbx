@@ -1,11 +1,12 @@
 import { matchesModifierOnlyShortcut, type ShortcutLikeEvent } from "@/lib/editor/keyboardShortcuts";
+import { normalizeWhereInput } from "@/lib/table/whereInput";
 import type { DataTabReuseMode } from "@/lib/tabs/dataTabReuseMode";
 import type { QueryTab, TreeNodeType } from "@/types/database";
 
 export type DataTabOpenMode = "default" | "new-tab";
 export type { DataTabReuseMode };
 
-type DataTabLike = Pick<QueryTab, "id" | "mode" | "connectionId" | "database" | "catalog" | "schema" | "title" | "tableMeta" | "tableMetaUpdatedAt" | "pinned" | "isExecuting" | "isCancelling" | "isExplaining" | "txnSessionId" | "pendingDataChangeCount">;
+type DataTabLike = Pick<QueryTab, "id" | "mode" | "connectionId" | "database" | "catalog" | "schema" | "title" | "tableMeta" | "tableMetaUpdatedAt" | "whereInput" | "pinned" | "isExecuting" | "isCancelling" | "isExplaining" | "txnSessionId" | "pendingDataChangeCount">;
 
 export interface DataTabTarget {
   connectionId: string;
@@ -13,6 +14,7 @@ export interface DataTabTarget {
   schema?: string;
   catalog?: string;
   tableName: string;
+  whereInput?: string;
 }
 
 export type ExistingDataTabCandidate<T extends DataTabLike> = {
@@ -44,18 +46,12 @@ function isSameTable(tab: DataTabLike, target: DataTabTarget): boolean {
   return isSameDatabase(tab, target) && dataTabCatalog(tab) === (target.catalog || "") && tabSchema === (target.schema || "") && (tab.tableMeta?.tableName || tab.title) === target.tableName;
 }
 
+function isSameDataTabIdentity(tab: DataTabLike, target: DataTabTarget): boolean {
+  return isSameTable(tab, target) && normalizeWhereInput(tab.whereInput) === normalizeWhereInput(target.whereInput);
+}
+
 export function canReuseActiveDataTab(tab: DataTabLike | undefined, target: DataTabTarget): boolean {
-  return (
-    tab !== undefined &&
-    isSameDatabase(tab, target) &&
-    dataTabCatalog(tab) === (target.catalog || "") &&
-    !tab.pinned &&
-    !tab.isExecuting &&
-    !tab.isCancelling &&
-    !tab.isExplaining &&
-    !tab.txnSessionId &&
-    !tab.pendingDataChangeCount
-  );
+  return tab !== undefined && isSameDatabase(tab, target) && dataTabCatalog(tab) === (target.catalog || "") && !tab.pinned && !tab.isExecuting && !tab.isCancelling && !tab.isExplaining && !tab.txnSessionId && !tab.pendingDataChangeCount;
 }
 
 export function canApplyDataTabMetadata(tab: DataTabLike | undefined, target: DataTabTarget, signal?: AbortSignal): boolean {
@@ -70,7 +66,7 @@ export function dataTabMetadataNeedsRefresh(tab: DataTabLike, maxAgeMs: number, 
 export function findExistingDataTabCandidate<T extends DataTabLike>(tabs: T[], target: DataTabTarget, options: { openMode: DataTabOpenMode; reuseMode: DataTabReuseMode; activeTabId?: string | null }): ExistingDataTabCandidate<T> | undefined {
   if (options.openMode === "new-tab" || options.reuseMode === "always-new") return undefined;
 
-  const sameTable = tabs.find((tab) => isSameTable(tab, target));
+  const sameTable = tabs.find((tab) => isSameDataTabIdentity(tab, target));
   if (sameTable) return { tab: sameTable, match: "same-table" };
 
   if (options.reuseMode === "active-tab") {

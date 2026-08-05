@@ -4,6 +4,8 @@ import * as api from "@/lib/backend/api.ts";
 import { parseSqlServerLinkedSchema, sqlServerLinkedTableName } from "@/lib/database/sqlServerLinkedServers.ts";
 import { isExplicitlyQuotedSqlIdentifier, quoteGaussDbJdbcIdentifier } from "@/lib/sql/sqlIdentifier.ts";
 
+export { normalizeWhereInput } from "@/lib/table/whereInput.ts";
+
 export interface BuildTableSelectSqlOptions {
   databaseType?: DatabaseType;
   identifierQuote?: string;
@@ -94,11 +96,6 @@ export function qualifiedTableName(options: Pick<BuildTableSelectSqlOptions, "da
     return `${quoteTableIdentifier(databaseType, schema)}.${quoteTableIdentifier(databaseType, tableName)}`;
   }
   return quoteTableIdentifier(databaseType, tableName);
-}
-
-export function normalizeWhereInput(whereInput?: string): string {
-  const withoutSemicolon = whereInput?.trim().replace(/;+$/, "").trim() ?? "";
-  return withoutSemicolon.replace(/^where\b/i, "").trim();
 }
 
 export async function buildTableSelectSql(options: BuildTableSelectSqlOptions): Promise<string> {
